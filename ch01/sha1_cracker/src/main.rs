@@ -9,7 +9,7 @@ use std::{
 const SHA1_HEX_STRING_LENGTH: usize = 40;
 
 fn main() -> Result<(), Box<dyn Error>>{
-    let args: Vec<_> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     if args.len() != 3 {
         println!("Usage:");
@@ -23,11 +23,11 @@ fn main() -> Result<(), Box<dyn Error>>{
     }
 
     let wordlist: File = File::open(&args[1])?;
-    let reader = BufReader::new(&wordlist);
+    let reader: BufReader<&File> = BufReader::new(&wordlist);
 
     for line in reader.lines() {
-        let line = line?;
-        let password = line.trim();
+        let line: String = line?;
+        let password: &str = line.trim();
 
         if hash == &hex::encode(sha1::Sha1::digest(password.as_bytes())){
             println!("Password found: {}",&password);
