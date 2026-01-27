@@ -1,12 +1,58 @@
-   0.018471500s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: stale: changed "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs"
-   0.018531600s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:           (vs) "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\target\\debug\\.fingerprint\\tricoder-dba483a7b2768cd6\\dep-bin-tricoder"
-   0.018542300s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 13413472347, nanos: 162834400 } < FileTime { seconds: 13413525102, nanos: 373061500 }
-   0.041852300s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: fingerprint dirty for tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder)/Check { test: false }/TargetInner { name: "tricoder", doc: true, ..: with_path("D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", Edition2024) }
-   0.041913600s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\target\\debug\\.fingerprint\\tricoder-dba483a7b2768cd6\\dep-bin-tricoder", reference_mtime: FileTime { seconds: 13413472347, nanos: 162834400 }, stale: "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", stale_mtime: FileTime { seconds: 13413525102, nanos: 373061500 } }))
-   0.042867800s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: stale: changed "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs"
-   0.042892900s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:           (vs) "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\target\\debug\\.fingerprint\\tricoder-037958fd9a8ecefe\\dep-test-bin-tricoder"
-   0.042910000s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 13413472347, nanos: 162834400 } < FileTime { seconds: 13413525102, nanos: 373061500 }
-   0.064240700s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: fingerprint dirty for tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder)/Check { test: true }/TargetInner { name: "tricoder", doc: true, ..: with_path("D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", Edition2024) }
-   0.064307500s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\target\\debug\\.fingerprint\\tricoder-037958fd9a8ecefe\\dep-test-bin-tricoder", reference_mtime: FileTime { seconds: 13413472347, nanos: 162834400 }, stale: "D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", stale_mtime: FileTime { seconds: 13413525102, nanos: 373061500 } }))
+   0.177869500s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: fingerprint error for tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder)/Check { test: false }/TargetInner { name: "tricoder", doc: true, ..: with_path("D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", Edition2024) }
+   0.177923700s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder\target\debug\.fingerprint\tricoder-b534e0bc4e6cfb7b\bin-tricoder`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.226651100s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint: fingerprint error for tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder)/Check { test: true }/TargetInner { name: "tricoder", doc: true, ..: with_path("D:\\05_PERSONAL\\LEARN\\RUST\\black_hat_rust\\ch02_ch04\\tricoder\\src\\main.rs", Edition2024) }
+   0.226678300s  INFO prepare_target{force=false package_id=tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder) target="tricoder"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder\target\debug\.fingerprint\tricoder-c72d2c6b01447ed9\test-bin-tricoder`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_repo
+   6: git_filter_source_repo
+   7: git_filter_source_repo
+   8: git_filter_source_repo
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_libgit2_prerelease
+  12: <unknown>
+  13: <unknown>
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
     Checking tricoder v0.1.0 (D:\05_PERSONAL\LEARN\RUST\black_hat_rust\ch02_ch04\tricoder)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.29s
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.50s
