@@ -3,7 +3,7 @@ use crate::{
     Error,
 };
 use reqwest::blocking::Client;
-use std::collections::HashSet;
+use std::{collections::HashSet,time::Duration};
 use trust_dns_resolver::{
     config::{ResolverConfig, ResolverOpts},
     Resolver,
@@ -11,10 +11,10 @@ use trust_dns_resolver::{
 
 pub fn enumerate(http_client: &Client, target: &str) -> 
     Result<Vec<Subdomain>,Error> {
-        let entries: Vec<CrtShEntry> = http_client
-            .get(&format!("https://crt.sh/json?q={}",target))
-            .send()?
-            .json()?;
+    let entries: Vec<CrtShEntry> = http_client
+        .get(&format!("https://crt.sh/json?q={}",target))
+        .send()?
+        .json()?;
 
     //clean & deduplicate subdomains
     let mut subdomains: HashSet<String> = entries
@@ -45,7 +45,7 @@ pub fn enumerate(http_client: &Client, target: &str) ->
 
 pub fn resolves(domain: &Subdomain) -> bool {
     let mut opts =  ResolverOpts::default();
-    opts.timeout = std::time::Duration::from_secs(2);
+    opts.timeout = Duration::from_secs(2);
 
     let dns_resolver = Resolver::new(
         ResolverConfig::default(), opts
