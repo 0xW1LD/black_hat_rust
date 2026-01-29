@@ -41,5 +41,6 @@ fn main() -> Result<(),Error>{
             println!("")
         }
     });
+    println!("Scan Completed.");
     Ok(())
 }
