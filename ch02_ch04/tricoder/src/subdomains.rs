@@ -17,7 +17,7 @@ pub fn enumerate(http_client: &Client, target: &str) ->
         .json()?;
 
     //clean & deduplicate subdomains
-    let mut subdomains: HashSet<String> = entries
+    let subdomains: HashSet<String> = entries
         .into_iter()
         .map(|entry| {
             entry
