@@ -1,6 +1,6 @@
 use crate::{
     model::{CrtShEntry,Subdomain},
-    Error,
+    error::Error,
 };
 use reqwest::blocking::Client;
 use std::{collections::HashSet,time::Duration};

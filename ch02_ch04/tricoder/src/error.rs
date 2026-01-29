@@ -2,8 +2,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug, Clone)]
 pub enum Error {
-    #[error("Usage: tricoder <domain>")]
-    CliUsage,
     #[error("Reqwest error: {0}")]
     Reqwest(String),
 }

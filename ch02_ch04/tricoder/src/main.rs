@@ -1,22 +1,25 @@
-use anyhow::Error;
+use anyhow::Result;
+use clap::Parser;
 use rayon::prelude::*;
 use reqwest::blocking::Client;
-use std::env;
 
 mod common_ports;
 mod error;
-use crate::error::Error::CliUsage;
 mod model;
 use crate::model::Subdomain;
 mod ports;
 mod subdomains;
 
-fn main() -> Result<(),Error>{
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        return Err(CliUsage.into());
-    }
-    let target = &args[1];
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[arg(short,long)]
+    domain: String,
+}
+
+fn main() -> Result<()>{
+    let cli: Cli = Cli::parse();
+    let target = &cli.domain;
 
     let http_client = Client::builder()
         .timeout(std::time::Duration::from_secs(15))
