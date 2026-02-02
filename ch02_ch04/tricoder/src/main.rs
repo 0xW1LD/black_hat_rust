@@ -1,6 +1,5 @@
 use anyhow::Result;
 use clap::Parser;
-use rayon::prelude::*;
 use reqwest::blocking::Client;
 
 mod common_ports;
@@ -32,7 +31,7 @@ fn main() -> Result<()>{
         let scan_result: Vec<Subdomain> =
             subdomains::enumerate(&http_client,target)
             .expect("main: Enumerating subdomains")
-            .into_par_iter()
+            .into_iter()
             .map(ports::scan_ports)
             .collect();
 
