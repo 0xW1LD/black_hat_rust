@@ -6,8 +6,8 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.55", features = ["derive"] }
-rayon = "1.11.0"
 reqwest = { version = "0.13.1", features = ["blocking", "json"] }
 serde = { version = "1.0.228", features = ["derive"] }
 thiserror = "2.0.18"
+tokio = "1.49.0"
 trust-dns-resolver = "0.23.2"
