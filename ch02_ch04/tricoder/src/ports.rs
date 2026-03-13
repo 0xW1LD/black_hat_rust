@@ -6,7 +6,7 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use std::{net::TcpStream, time::Duration};
 
 pub fn scan_ports(mut subdomain: Subdomain) -> Subdomain {
-    let socket_addresses: Vec<SocketAddr> = format!("{}:0",subdomain.domain)
+    let socket_addresses: Vec<SocketAddr> = format!("{}:0", subdomain.domain)
         .to_socket_addrs()
         .expect("port scanner: Creating socket address")
         .collect();
@@ -16,14 +16,14 @@ pub fn scan_ports(mut subdomain: Subdomain) -> Subdomain {
     subdomain.open_ports = MOST_COMMON_PORTS_100
         .into_iter()
         .map(|port| scan_port(socket_addresses[0], *port))
-        .filter(|port| port.is_open) 
+        .filter(|port| port.is_open)
         .collect();
-        subdomain
+    subdomain
 }
 fn scan_port(mut socket_address: SocketAddr, port: u16) -> Port {
     let timeout = Duration::from_secs(3);
     socket_address.set_port(port);
-    let is_open = if let Ok(_) = TcpStream::connect_timeout(&socket_address,timeout) {
+    let is_open = if let Ok(_) = TcpStream::connect_timeout(&socket_address, timeout) {
         true
     } else {
         false

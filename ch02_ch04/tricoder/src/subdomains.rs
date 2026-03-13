@@ -1,18 +1,17 @@
 use crate::{
-    model::{CrtShEntry,Subdomain},
     error::Error,
+    model::{CrtShEntry, Subdomain},
 };
 use reqwest::blocking::Client;
-use std::{collections::HashSet,time::Duration};
+use std::{collections::HashSet, time::Duration};
 use trust_dns_resolver::{
-    config::{ResolverConfig, ResolverOpts},
     Resolver,
+    config::{ResolverConfig, ResolverOpts},
 };
 
-pub fn enumerate(http_client: &Client, target: &str) -> 
-    Result<Vec<Subdomain>,Error> {
+pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, Error> {
     let entries: Vec<CrtShEntry> = http_client
-        .get(&format!("https://crt.sh/json?q={}",target))
+        .get(&format!("https://crt.sh/json?q={}", target))
         .send()?
         .json()?;
 
@@ -27,7 +26,7 @@ pub fn enumerate(http_client: &Client, target: &str) ->
                 .collect::<Vec<String>>()
         })
         .flatten()
-        .filter(|subdomain: &String| subdomain !=target)
+        .filter(|subdomain: &String| subdomain != target)
         .filter(|subdomain: &String| !subdomain.contains("*"))
         .collect();
 
@@ -44,12 +43,10 @@ pub fn enumerate(http_client: &Client, target: &str) ->
 }
 
 pub fn resolves(domain: &Subdomain) -> bool {
-    let mut opts =  ResolverOpts::default();
+    let mut opts = ResolverOpts::default();
     opts.timeout = Duration::from_secs(2);
 
-    let dns_resolver = Resolver::new(
-        ResolverConfig::default(), opts
-    ) 
-    .expect("subdomain resolver: Building DNS client");
+    let dns_resolver = Resolver::new(ResolverConfig::default(), opts)
+        .expect("subdomain resolver: Building DNS client");
     dns_resolver.lookup_ip(&domain.domain).is_ok()
 }
