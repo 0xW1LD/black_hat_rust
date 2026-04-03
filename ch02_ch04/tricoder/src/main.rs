@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
     let target = &cli.domain;
 
     let http_client = Client::builder()
-        .timeout(Duration::from_secs(15))
+        .timeout(Duration::from_secs(60))
         .build()?;
 
     let port_concurrency = 200;
