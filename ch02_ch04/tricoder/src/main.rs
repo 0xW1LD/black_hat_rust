@@ -1,6 +1,8 @@
 use anyhow::Result;
 use clap::Parser;
-use reqwest::blocking::Client;
+use futures::{stream, StreamExt};
+use reqwest::Client;
+use std::time::{Duration, Instant};
 
 mod common_ports;
 mod error;
@@ -16,30 +18,38 @@ struct Cli {
     domain: String,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
     let target = &cli.domain;
 
     let http_client = Client::builder()
-        .timeout(std::time::Duration::from_secs(15))
+        .timeout(Duration::from_secs(15))
         .build()?;
-    let pool = rayon::ThreadPoolBuilder::new().num_threads(100).build()?;
 
-    pool.install(|| {
-        let scan_result: Vec<Subdomain> = subdomains::enumerate(&http_client, target)
-            .expect("main: Enumerating subdomains")
-            .into_iter()
-            .map(ports::scan_ports)
-            .collect();
+    let port_concurrency = 200;
+    let subdomain_concurrency = 100;
 
-        for subdomain in scan_result {
-            println!("{}", &subdomain.domain);
-            for port in &subdomain.open_ports {
-                println!("    {}", port.port);
-            }
-            println!("")
+    let scan_start = Instant::now();
+
+    let subdomains = subdomains::enumerate(&http_client,target).await?;
+
+    let scan_result: Vec<Subdomain> = stream::iter(subdomains.into_iter())
+        .map(|subdomain| ports::scan_ports(port_concurrency,subdomain))
+        .buffer_unordered(subdomain_concurrency)
+        .collect()
+        .await;
+
+    let scan_duration = scan_start.elapsed();
+    println!("Scan finished in: {:?}",scan_duration);
+
+    for subdomain in scan_result {
+        println!("{}", &subdomain.domain);
+        for port in &subdomain.open_ports {
+            println!("    {}", port.port);
         }
-    });
+        println!("")
+    }
     println!("Scan Completed.");
     Ok(())
 }

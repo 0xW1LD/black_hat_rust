@@ -2,21 +2,33 @@ use crate::{
     error::Error,
     model::{CrtShEntry, Subdomain},
 };
-use reqwest::blocking::Client;
+use futures::{stream,StreamExt};
+use reqwest::Client;
 use std::{collections::HashSet, time::Duration};
 use trust_dns_resolver::{
-    Resolver,
-    config::{ResolverConfig, ResolverOpts},
+    AsyncResolver, config::{ResolverConfig, ResolverOpts}, name_server::TokioConnectionProvider
 };
 
-pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, Error> {
+type DnsResolver = AsyncResolver<TokioConnectionProvider>;
+
+pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, Error> {
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/json?q={}", target))
-        .send()?
-        .json()?;
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    let mut dns_resolver_opts = ResolverOpts::default();
+    dns_resolver_opts.timeout = Duration::from_secs(4);
+
+    let dns_resolver = AsyncResolver::tokio(
+        ResolverConfig::default(),
+        dns_resolver_opts,
+    );
 
     //clean & deduplicate subdomains
-    let subdomains: HashSet<String> = entries
+    let mut subdomains: HashSet<String> = entries
         .into_iter()
         .map(|entry| {
             entry
@@ -30,23 +42,29 @@ pub fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, E
         .filter(|subdomain: &String| !subdomain.contains("*"))
         .collect();
 
-    let subdomains: Vec<Subdomain> = subdomains
-        .into_iter()
+    subdomains.insert(target.to_string());
+
+    let subdomains: Vec<Subdomain> = stream::iter(subdomains.into_iter())
         .map(|domain| Subdomain {
             domain,
             open_ports: Vec::new(),
         })
-        .filter(resolves)
-        .collect();
+        .filter_map(|subdomain|{
+            let dns_resolver = dns_resolver.clone();
+            async move {
+                if resolves(&dns_resolver,&subdomain).await {
+                    Some(subdomain)
+                } else {
+                    None
+                }
+            }
+        })
+        .collect()
+        .await;
 
     Ok(subdomains)
 }
 
-pub fn resolves(domain: &Subdomain) -> bool {
-    let mut opts = ResolverOpts::default();
-    opts.timeout = Duration::from_secs(2);
-
-    let dns_resolver = Resolver::new(ResolverConfig::default(), opts)
-        .expect("subdomain resolver: Building DNS client");
-    dns_resolver.lookup_ip(&domain.domain).is_ok()
+pub async fn resolves(dns_resolver: &DnsResolver, domain: &Subdomain) -> bool {
+    dns_resolver.lookup_ip(&domain.domain).await.is_ok()
 }
