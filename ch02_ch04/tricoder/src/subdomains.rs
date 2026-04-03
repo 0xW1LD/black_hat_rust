@@ -12,12 +12,14 @@ use trust_dns_resolver::{
 type DnsResolver = AsyncResolver<TokioConnectionProvider>;
 
 pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, Error> {
+    println!("[*] Gathering Entries...");
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/json?q={}", target))
         .send()
         .await?
         .json()
         .await?;
+    println!("[+] Successfully Gathered Entries!");
 
     let mut dns_resolver_opts = ResolverOpts::default();
     dns_resolver_opts.timeout = Duration::from_secs(4);
