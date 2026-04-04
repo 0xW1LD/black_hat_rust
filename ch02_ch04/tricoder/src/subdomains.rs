@@ -63,6 +63,7 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
         })
         .collect()
         .await;
+    println!("[+] Resolved {} Subdomains!",subdomains.len());
 
     Ok(subdomains)
 }
