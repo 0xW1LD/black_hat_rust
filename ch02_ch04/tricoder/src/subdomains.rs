@@ -19,7 +19,6 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
         .await?
         .json()
         .await?;
-    println!("[+] Found {} Entries!",entries.len());
 
     let mut dns_resolver_opts = ResolverOpts::default();
     dns_resolver_opts.timeout = Duration::from_secs(4);
@@ -45,6 +44,7 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
         .collect();
 
     subdomains.insert(target.to_string());
+    println!("[+] Found {} Subdomains!",subdomains.len());
 
     let subdomains: Vec<Subdomain> = stream::iter(subdomains.into_iter())
         .map(|domain| Subdomain {
