@@ -29,8 +29,8 @@ async fn main() -> Result<()> {
         //.danger_accept_invalid_certs(true)
         .build()?;
 
-    let port_concurrency = 200;
-    let subdomain_concurrency = 100;
+    let port_concurrency = 10;
+    let subdomain_concurrency = 10;
 
     let scan_start = Instant::now();
 
