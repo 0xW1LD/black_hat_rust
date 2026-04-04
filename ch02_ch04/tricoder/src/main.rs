@@ -48,7 +48,7 @@ async fn main() -> Result<()> {
     println!("[+] Scan finished in: {:?}",scan_duration);
 
     for subdomain in scan_result {
-        println!("[+] Subdomain: {} \n[+] Open Ports:", &subdomain.domain);
+        println!("[+] Subdomain: {}", &subdomain.domain);
         for port in &subdomain.open_ports {
             println!("    {}", port.port);
         }
