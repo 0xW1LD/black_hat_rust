@@ -1,31 +1,38 @@
 use crate::{
     common_ports::MOST_COMMON_PORTS_100,
-    model::{Port, Subdomain},
+    model::{Port, ScanTarget},
 };
 use futures::{StreamExt, stream};
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::time::Duration;
 use tokio::net::TcpStream;
 
-pub async fn scan_ports(concurrency: usize,subdomain: Subdomain) -> Subdomain {
-    let mut subdomain = subdomain.clone();
-    let socket_addresses: Vec<SocketAddr> = format!("{}:1337", subdomain.domain)
+pub async fn scan_ports(concurrency: usize, target: ScanTarget) -> ScanTarget {
+    let mut target = target.clone();
+    let socket_addresses: Vec<SocketAddr> = match &target {
+        ScanTarget::Domain(domain) => format!("{}:1337", domain.domain)
         .to_socket_addrs()
         .expect("port scanner: Creating socket address")
-        .collect();
+        .collect(),
+        ScanTarget::Ip(ip) => vec![SocketAddr::new(ip.ip, 0)],
+};
     if socket_addresses.len() == 0 {
-        return subdomain;
+        return target;
     }
 
     let socket_address = socket_addresses[0];
-    subdomain.open_ports = stream::iter(MOST_COMMON_PORTS_100)
-        .map(|port| scan_port(socket_address, *port))
-        .buffer_unordered(concurrency)
-        .filter(|port| futures::future::ready(port.is_open))
-        .collect()
-        .await;
+    let open_ports: Vec<Port> = stream::iter(MOST_COMMON_PORTS_100)
+    .map(|port| scan_port(socket_address, *port))
+    .buffer_unordered(concurrency)
+    .filter(|port| futures::future::ready(port.is_open))
+    .collect()
+    .await;
+    match &mut target {
+        ScanTarget::Domain(domain)=> domain.open_ports = open_ports,
+        ScanTarget::Ip(ip) => ip.open_ports = open_ports,
+    };
 
-    subdomain
+    target
 }
 async fn scan_port(mut socket_address: SocketAddr, port: u16) -> Port {
     let timeout = Duration::from_secs(3);

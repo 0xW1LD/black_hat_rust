@@ -1,4 +1,16 @@
 use serde::Deserialize;
+use std::net::IpAddr;
+
+#[derive(Debug, Clone)]
+pub enum ScanTarget {
+    Domain(Subdomain),
+    Ip(IpAddress),
+}
+#[derive(Debug, Clone)]
+pub struct IpAddress {
+    pub ip: IpAddr,
+    pub open_ports: Vec<Port>,
+}
 
 #[derive(Debug, Clone)]
 pub struct Subdomain {

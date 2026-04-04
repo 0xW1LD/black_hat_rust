@@ -1,13 +1,13 @@
 use anyhow::Result;
 use clap::Parser;
-use futures::{stream, StreamExt};
+use futures::{StreamExt, stream};
 use reqwest::Client;
-use std::time::{Duration, Instant};
+use std::{net::IpAddr, time::{Duration, Instant}};
 
 mod common_ports;
 mod error;
 mod model;
-use crate::model::Subdomain;
+use crate::model::{IpAddress, ScanTarget, Subdomain};
 mod ports;
 mod subdomains;
 
@@ -15,13 +15,16 @@ mod subdomains;
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[arg(short, long)]
-    domain: String,
+    target: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
-    let target = &cli.domain;
+    let target = match &cli.target.parse::<IpAddr>() {
+        Ok(ip) => ScanTarget::Ip(IpAddress{ip: *ip, open_ports: vec![]}),
+        Err(_) => ScanTarget::Domain(Subdomain{domain: cli.target,open_ports: vec![]})
+    };
 
     let http_client = Client::builder()
         .timeout(Duration::from_secs(60))
@@ -30,29 +33,52 @@ async fn main() -> Result<()> {
         .build()?;
 
     let port_concurrency = 100;
-    let subdomain_concurrency = 10;
+    let scan_concurrency = 10;
 
     let scan_start = Instant::now();
+    let scan_result: Vec<ScanTarget>;
 
-    println!("[*] Enumerating Subdomains...");
-    let subdomains = subdomains::enumerate(&http_client,target).await?;
+    match target{
+         ScanTarget::Domain(domain) => {
+            println!("[*] Domain Found, Enumerating Subdomains...");
+            let subdomains = subdomains::enumerate(&http_client,&domain.domain).await?;
+            println!("[*] Scanning Ports...");
+            scan_result = stream::iter(subdomains.into_iter())
+                .map(|subdomain| ports::scan_ports(port_concurrency,ScanTarget::Domain(subdomain)))
+                .buffer_unordered(scan_concurrency)
+                .collect()
+                .await;
+        },
+        ScanTarget::Ip(ip) => {
+            println!("[*] Scanning Ports...");
+            scan_result = stream::iter(std::iter::once(ScanTarget::Ip(ip)))
+            .map(|ip| ports::scan_ports(port_concurrency, ip))
+            .buffer_unordered(scan_concurrency)
+            .collect()
+            .await;
+        },
+    };
 
-    println!("[*] Scanning Ports...");
-    let scan_result: Vec<Subdomain> = stream::iter(subdomains.into_iter())
-        .map(|subdomain| ports::scan_ports(port_concurrency,subdomain))
-        .buffer_unordered(subdomain_concurrency)
-        .collect()
-        .await;
 
     let scan_duration = scan_start.elapsed();
     println!("[+] Scan finished in: {:?}",scan_duration);
 
-    for subdomain in scan_result {
-        println!("[+] Subdomain: {}", &subdomain.domain);
-        for port in &subdomain.open_ports {
-            println!("    {}", port.port);
+    for target in scan_result {
+        match target {
+            ScanTarget::Domain(domain) => {
+                println!("[+] Target: {}", &domain.domain);
+                for port in &domain.open_ports {
+                    println!("      {}",port.port)
+                }
+            }
+            ScanTarget::Ip(ip) => {
+                println!("[+] Target: {}", &ip.ip);
+                for port in &ip.open_ports {
+                    println!("      {}",port.port)
+                }
+
+            }
         }
-        println!("")
     }
     println!("Scan Completed.");
     Ok(())
