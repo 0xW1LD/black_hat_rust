@@ -7,4 +7,4 @@ pub const MOST_COMMON_PORTS_100: &[u16] = &[
     13, 1029, 9, 5051, 6646, 49157, 1028, 873, 1755, 2717, 4899, 9100, 119, 37,
 ];
 
-/* pub const MOST_COMMON_PORTS_100: &[u16] = &[80,443];
+// pub const MOST_COMMON_PORTS_100: &[u16] = &[80,443]; 
