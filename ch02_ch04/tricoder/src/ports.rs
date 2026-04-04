@@ -14,7 +14,7 @@ pub async fn scan_ports(concurrency: usize,subdomain: Subdomain) -> Subdomain {
         .expect("port scanner: Creating socket address")
         .collect();
     if socket_addresses.len() == 0 {
-        subdomainurn subdomain;
+        return subdomain;
     }
 
     let socket_address = socket_addresses[0];
