@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
     match target{
          ScanTarget::Domain(domain) => {
-            println!("[*] Domain Found, Enumerating Subdomains...");
+            println!("[*] Domain found, enumerating subdomains...");
             let subdomains = subdomains::enumerate(&http_client,&domain.domain).await?;
             println!("[*] Scanning Ports...");
             scan_result = stream::iter(subdomains.into_iter())
@@ -50,6 +50,7 @@ async fn main() -> Result<()> {
                 .await;
         },
         ScanTarget::Ip(ip) => {
+            println!("[*] Ip found, skipping subdomain enumeration...");
             println!("[*] Scanning Ports...");
             scan_result = stream::iter(std::iter::once(ScanTarget::Ip(ip)))
             .map(|ip| ports::scan_ports(port_concurrency, ip))
