@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
 
     let http_client = Client::builder()
         .timeout(Duration::from_secs(60))
-        //.proxy(reqwest::Proxy::http("http://127.0.0.1:8080")?)
+        //.proxy(reqwest::Proxy::all("http://127.0.0.1:8080")?)
         //.danger_accept_invalid_certs(true)
         .build()?;
 
