@@ -38,27 +38,27 @@ async fn main() -> Result<()> {
     let scan_start = Instant::now();
     let scan_result: Vec<ScanTarget>;
 
-    match target{
+    let targets: Vec<ScanTarget> = match target{
          ScanTarget::Domain(domain) => {
             println!("[*] Domain found, enumerating subdomains...");
-            let subdomains = subdomains::enumerate(&http_client,&domain.domain).await?;
-            println!("[*] Scanning Ports...");
-            scan_result = stream::iter(subdomains.into_iter())
-                .map(|subdomain| ports::scan_ports(port_concurrency,ScanTarget::Domain(subdomain)))
-                .buffer_unordered(scan_concurrency)
+            subdomains::enumerate(&http_client,&domain.domain)
+                .await?
+                .into_iter()
+                .map(ScanTarget::Domain)
                 .collect()
-                .await;
         },
         ScanTarget::Ip(ip) => {
             println!("[*] Ip found, skipping subdomain enumeration...");
-            println!("[*] Scanning Ports...");
-            scan_result = stream::iter(std::iter::once(ScanTarget::Ip(ip)))
-            .map(|ip| ports::scan_ports(port_concurrency, ip))
-            .buffer_unordered(scan_concurrency)
-            .collect()
-            .await;
+            vec![ScanTarget::Ip(ip)]
         },
     };
+
+    println!("[*] Scanning Ports...");
+    scan_result = stream::iter(targets)
+    .map(|ip| ports::scan_ports(port_concurrency, ip))
+    .buffer_unordered(scan_concurrency)
+    .collect()
+    .await;
 
 
     let scan_duration = scan_start.elapsed();
