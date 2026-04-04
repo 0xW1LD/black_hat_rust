@@ -34,8 +34,10 @@ async fn main() -> Result<()> {
 
     let scan_start = Instant::now();
 
+    println!("[*] Enumerating Subdomains...");
     let subdomains = subdomains::enumerate(&http_client,target).await?;
 
+    println!("[*] Scanning Ports...");
     let scan_result: Vec<Subdomain> = stream::iter(subdomains.into_iter())
         .map(|subdomain| ports::scan_ports(port_concurrency,subdomain))
         .buffer_unordered(subdomain_concurrency)
@@ -43,10 +45,10 @@ async fn main() -> Result<()> {
         .await;
 
     let scan_duration = scan_start.elapsed();
-    println!("Scan finished in: {:?}",scan_duration);
+    println!("[+] Scan finished in: {:?}",scan_duration);
 
     for subdomain in scan_result {
-        println!("{}", &subdomain.domain);
+        println!("[+] Subdomain: {} \n\n [+] Open Ports:", &subdomain.domain);
         for port in &subdomain.open_ports {
             println!("    {}", port.port);
         }
