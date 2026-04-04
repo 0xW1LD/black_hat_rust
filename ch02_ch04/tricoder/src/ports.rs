@@ -10,7 +10,7 @@ use tokio::sync::mpsc;
 
 pub async fn scan_ports(concurrency: usize,subdomain: Subdomain) -> Subdomain {
     let mut ret = subdomain.clone();
-    let socket_addresses: Vec<SocketAddr> = format!("{}:0", subdomain.domain)
+    let socket_addresses: Vec<SocketAddr> = format!("{}:1337", subdomain.domain)
         .to_socket_addrs()
         .expect("port scanner: Creating socket address")
         .collect();
@@ -40,6 +40,8 @@ pub async fn scan_ports(concurrency: usize,subdomain: Subdomain) -> Subdomain {
         }
     })
     .await;
+    drop(output_tx);
+
     let output_rx_stream = tokio_stream::wrappers::ReceiverStream::new(output_rx);
     ret.open_ports = output_rx_stream.collect().await;
 
