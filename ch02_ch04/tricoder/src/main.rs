@@ -2,15 +2,12 @@ use anyhow::Result;
 use clap::Parser;
 use futures::{StreamExt, stream};
 use reqwest::Client;
-use std::{
-    net::IpAddr,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
 mod common_ports;
 mod error;
 mod model;
-use crate::model::{IpAddress, ScanTarget, Subdomain};
+use crate::model::ScanTarget;
 mod ports;
 mod subdomains;
 
