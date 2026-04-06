@@ -34,8 +34,14 @@ impl TryFrom<String> for ScanTarget {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.parse::<IpAddr>() {
-            Ok(ip) => Ok(ScanTarget::Ip(IpAddress { ip, open_ports: vec![] })),
-            Err(_) => Ok( ScanTarget::Domain(Subdomain{domain: value, open_ports: vec![]}))
+            Ok(ip) => Ok(ScanTarget::Ip(IpAddress {
+                ip,
+                open_ports: vec![],
+            })),
+            Err(_) => Ok(ScanTarget::Domain(Subdomain {
+                domain: value,
+                open_ports: vec![],
+            })),
         }
     }
 }
