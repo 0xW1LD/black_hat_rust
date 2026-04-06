@@ -11,24 +11,24 @@ pub async fn scan_ports(concurrency: usize, target: ScanTarget) -> ScanTarget {
     let mut target = target.clone();
     let socket_addresses: Vec<SocketAddr> = match &target {
         ScanTarget::Domain(domain) => format!("{}:1337", domain.domain)
-        .to_socket_addrs()
-        .expect("port scanner: Creating socket address")
-        .collect(),
+            .to_socket_addrs()
+            .expect("port scanner: Creating socket address")
+            .collect(),
         ScanTarget::Ip(ip) => vec![SocketAddr::new(ip.ip, 0)],
-};
+    };
     if socket_addresses.len() == 0 {
         return target;
     }
 
     let socket_address = socket_addresses[0];
     let open_ports: Vec<Port> = stream::iter(MOST_COMMON_PORTS_100)
-    .map(|port| scan_port(socket_address, *port))
-    .buffer_unordered(concurrency)
-    .filter(|port| futures::future::ready(port.is_open))
-    .collect()
-    .await;
+        .map(|port| scan_port(socket_address, *port))
+        .buffer_unordered(concurrency)
+        .filter(|port| futures::future::ready(port.is_open))
+        .collect()
+        .await;
     match &mut target {
-        ScanTarget::Domain(domain)=> domain.open_ports = open_ports,
+        ScanTarget::Domain(domain) => domain.open_ports = open_ports,
         ScanTarget::Ip(ip) => ip.open_ports = open_ports,
     };
 

@@ -2,11 +2,13 @@ use crate::{
     error::Error,
     model::{CrtShEntry, Subdomain},
 };
-use futures::{stream,StreamExt};
+use futures::{StreamExt, stream};
 use reqwest::Client;
 use std::{collections::HashSet, time::Duration};
 use trust_dns_resolver::{
-    AsyncResolver, config::{ResolverConfig, ResolverOpts}, name_server::TokioConnectionProvider
+    AsyncResolver,
+    config::{ResolverConfig, ResolverOpts},
+    name_server::TokioConnectionProvider,
 };
 
 type DnsResolver = AsyncResolver<TokioConnectionProvider>;
@@ -23,10 +25,7 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
     let mut dns_resolver_opts = ResolverOpts::default();
     dns_resolver_opts.timeout = Duration::from_secs(4);
 
-    let dns_resolver = AsyncResolver::tokio(
-        ResolverConfig::default(),
-        dns_resolver_opts,
-    );
+    let dns_resolver = AsyncResolver::tokio(ResolverConfig::default(), dns_resolver_opts);
 
     //clean & deduplicate subdomains
     let mut subdomains: HashSet<String> = entries
@@ -44,17 +43,17 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
         .collect();
 
     subdomains.insert(target.to_string());
-    println!("[+] Found {} Subdomains!",subdomains.len());
+    println!("[+] Found {} Subdomains!", subdomains.len());
 
     let subdomains: Vec<Subdomain> = stream::iter(subdomains.into_iter())
         .map(|domain| Subdomain {
             domain,
             open_ports: Vec::new(),
         })
-        .filter_map(|subdomain|{
+        .filter_map(|subdomain| {
             let dns_resolver = dns_resolver.clone();
             async move {
-                if resolves(&dns_resolver,&subdomain).await {
+                if resolves(&dns_resolver, &subdomain).await {
                     Some(subdomain)
                 } else {
                     None
@@ -63,7 +62,7 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
         })
         .collect()
         .await;
-    println!("[+] Resolved {} Subdomains!",subdomains.len());
+    println!("[+] Resolved {} Subdomains!", subdomains.len());
 
     Ok(subdomains)
 }
