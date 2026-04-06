@@ -24,16 +24,7 @@ struct Cli {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
-    let target = match &cli.target.parse::<IpAddr>() {
-        Ok(ip) => ScanTarget::Ip(IpAddress {
-            ip: *ip,
-            open_ports: vec![],
-        }),
-        Err(_) => ScanTarget::Domain(Subdomain {
-            domain: cli.target,
-            open_ports: vec![],
-        }),
-    };
+    let target = ScanTarget::try_from(cli.target)?;
 
     let http_client = Client::builder()
         .timeout(Duration::from_secs(60))
