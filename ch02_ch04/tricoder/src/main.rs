@@ -60,7 +60,7 @@ async fn main() -> Result<()> {
             println!("[*] Ip found, skipping subdomain enumeration...");
             match wl {
                 Some(_) => println!("[*] Wordlist was found but not needed, ignoring..."),
-                None => (),
+                None => {},
             }
             vec![ScanTarget::new(Ip(ip))]
         }
