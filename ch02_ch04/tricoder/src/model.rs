@@ -26,6 +26,13 @@ pub struct CrtShEntry {
 }
 
 impl ScanTarget {
+    pub fn new() -> Self {
+        Self {
+            target: ScanTargetType::Domain("fake.w1ld".to_string()),
+            open_ports: vec![],
+        }
+    }
+
     pub fn ports(&self) -> &[Port] {
         &self.open_ports
     }

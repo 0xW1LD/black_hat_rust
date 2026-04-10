@@ -2,26 +2,36 @@ use anyhow::Result;
 use clap::Parser;
 use futures::{StreamExt, stream};
 use reqwest::Client;
+use std::net::IpAddr;
+use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 mod common_ports;
 mod error;
 mod model;
-use crate::model::{ScanTarget, ScanTargetType};
+use crate::model::{
+    ScanTarget,
+    ScanTargetType::{Domain, Ip},
+};
 mod ports;
 mod subdomains;
+mod vhosts;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
     #[arg(short, long)]
     target: String,
+
+    #[arg(short, long)]
+    wordlist: Option<PathBuf>,
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let cli: Cli = Cli::parse();
     let target = ScanTarget::try_from(cli.target)?;
+    let wordlist = cli.wordlist;
 
     let http_client = Client::builder()
         .timeout(Duration::from_secs(60))
@@ -35,18 +45,22 @@ async fn main() -> Result<()> {
     let scan_start = Instant::now();
     let scan_result: Vec<ScanTarget>;
 
-    let targets: Vec<ScanTarget> = match target.target {
-        ScanTargetType::Domain(domain) => {
+    let targets: Vec<ScanTarget> = match (target.target, wordlist) {
+        (Domain(_domain), Some(_wl)) => {
+            print!("[-] Vhost functionality not yet implemented");
+            vec![ScanTarget::new()]
+        }
+        (Domain(domain), None) => {
             println!("[*] Domain found, enumerating subdomains...");
             subdomains::enumerate(&http_client, &domain)
                 .await?
                 .into_iter()
                 .collect()
         }
-        ScanTargetType::Ip(ip) => {
+        (Ip(ip), _) => {
             println!("[*] Ip found, skipping subdomain enumeration...");
             vec![ScanTarget {
-                target: ScanTargetType::Ip(ip),
+                target: Ip(ip),
                 open_ports: vec![],
             }]
         }
