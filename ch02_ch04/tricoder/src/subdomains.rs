@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    model::{CrtShEntry, Subdomain},
+    model::{CrtShEntry, ScanTarget, ScanTargetType},
 };
 use futures::{StreamExt, stream};
 use reqwest::Client;
@@ -13,7 +13,7 @@ use trust_dns_resolver::{
 
 type DnsResolver = AsyncResolver<TokioConnectionProvider>;
 
-pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdomain>, Error> {
+pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<ScanTarget>, Error> {
     println!("[*] Gathering Entries...");
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/json?q={}", target))
@@ -45,15 +45,15 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
     subdomains.insert(target.to_string());
     println!("[+] Found {} Subdomains!", subdomains.len());
 
-    let subdomains: Vec<Subdomain> = stream::iter(subdomains.into_iter())
-        .map(|domain| Subdomain {
-            domain,
+    let subdomains: Vec<ScanTarget> = stream::iter(subdomains.into_iter())
+        .map(|domain| ScanTarget {
+            target: ScanTargetType::Domain(domain),
             open_ports: Vec::new(),
         })
         .filter_map(|subdomain| {
             let dns_resolver = dns_resolver.clone();
             async move {
-                if resolves(&dns_resolver, &subdomain).await {
+                if resolves(&dns_resolver, subdomain.to_string()).await {
                     Some(subdomain)
                 } else {
                     None
@@ -67,6 +67,6 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<Subdoma
     Ok(subdomains)
 }
 
-pub async fn resolves(dns_resolver: &DnsResolver, domain: &Subdomain) -> bool {
-    dns_resolver.lookup_ip(&domain.domain).await.is_ok()
+pub async fn resolves(dns_resolver: &DnsResolver, domain: String) -> bool {
+    dns_resolver.lookup_ip(&domain).await.is_ok()
 }

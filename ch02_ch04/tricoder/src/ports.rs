@@ -1,6 +1,6 @@
 use crate::{
     common_ports::MOST_COMMON_PORTS_100,
-    model::{Port, ScanTarget},
+    model::{Port, ScanTarget, ScanTargetType},
 };
 use futures::{StreamExt, stream};
 use std::net::{SocketAddr, ToSocketAddrs};
@@ -9,12 +9,12 @@ use tokio::net::TcpStream;
 
 pub async fn scan_ports(concurrency: usize, target: ScanTarget) -> ScanTarget {
     let mut target = target.clone();
-    let socket_addresses: Vec<SocketAddr> = match &target {
-        ScanTarget::Domain(domain) => format!("{}:1337", domain.domain)
+    let socket_addresses: Vec<SocketAddr> = match &target.target {
+        ScanTargetType::Domain(domain) => format!("{}:1337", domain)
             .to_socket_addrs()
             .expect("port scanner: Creating socket address")
             .collect(),
-        ScanTarget::Ip(ip) => vec![SocketAddr::new(ip.ip, 0)],
+        ScanTargetType::Ip(ip) => vec![SocketAddr::new(*ip, 0)],
     };
     if socket_addresses.len() == 0 {
         return target;
@@ -27,10 +27,7 @@ pub async fn scan_ports(concurrency: usize, target: ScanTarget) -> ScanTarget {
         .filter(|port| futures::future::ready(port.is_open))
         .collect()
         .await;
-    match &mut target {
-        ScanTarget::Domain(domain) => domain.open_ports = open_ports,
-        ScanTarget::Ip(ip) => ip.open_ports = open_ports,
-    };
+    target.open_ports = open_ports;
 
     target
 }

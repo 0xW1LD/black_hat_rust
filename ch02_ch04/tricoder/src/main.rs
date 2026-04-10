@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 mod common_ports;
 mod error;
 mod model;
-use crate::model::ScanTarget;
+use crate::model::{ScanTarget, ScanTargetType};
 mod ports;
 mod subdomains;
 
@@ -35,18 +35,20 @@ async fn main() -> Result<()> {
     let scan_start = Instant::now();
     let scan_result: Vec<ScanTarget>;
 
-    let targets: Vec<ScanTarget> = match target {
-        ScanTarget::Domain(domain) => {
+    let targets: Vec<ScanTarget> = match target.target {
+        ScanTargetType::Domain(domain) => {
             println!("[*] Domain found, enumerating subdomains...");
-            subdomains::enumerate(&http_client, &domain.domain)
+            subdomains::enumerate(&http_client, &domain)
                 .await?
                 .into_iter()
-                .map(ScanTarget::Domain)
                 .collect()
         }
-        ScanTarget::Ip(ip) => {
+        ScanTargetType::Ip(ip) => {
             println!("[*] Ip found, skipping subdomain enumeration...");
-            vec![ScanTarget::Ip(ip)]
+            vec![ScanTarget {
+                target: ScanTargetType::Ip(ip),
+                open_ports: vec![],
+            }]
         }
     };
 

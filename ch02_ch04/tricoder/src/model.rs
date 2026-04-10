@@ -4,19 +4,13 @@ use std::fmt::Display;
 use std::net::IpAddr;
 
 #[derive(Debug, Clone)]
-pub enum ScanTarget {
-    Domain(Subdomain),
-    Ip(IpAddress),
+pub enum ScanTargetType {
+    Domain(String),
+    Ip(IpAddr),
 }
 #[derive(Debug, Clone)]
-pub struct IpAddress {
-    pub ip: IpAddr,
-    pub open_ports: Vec<Port>,
-}
-
-#[derive(Debug, Clone)]
-pub struct Subdomain {
-    pub domain: String,
+pub struct ScanTarget {
+    pub target: ScanTargetType,
     pub open_ports: Vec<Port>,
 }
 
@@ -32,20 +26,20 @@ pub struct CrtShEntry {
 }
 
 impl ScanTarget {
-    pub fn ports(&self) -> Vec<Port> {
-        match &self {
-            ScanTarget::Domain(domain) => domain.open_ports.clone(),
-            ScanTarget::Ip(ip) => ip.open_ports.clone(),
+    pub fn ports(&self) -> &[Port] {
+        &self.open_ports
+    }
+    pub fn to_string(&self) -> String {
+        match &self.target {
+            ScanTargetType::Domain(domain) => domain.to_string(),
+            ScanTargetType::Ip(ip) => ip.to_string(),
         }
     }
 }
 
 impl Display for ScanTarget {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self {
-            ScanTarget::Domain(domain) => write!(f, "{}", domain.domain),
-            ScanTarget::Ip(ip) => write!(f, "{}", ip.ip),
-        }
+        write!(f, "{}", self.to_string())
     }
 }
 
@@ -54,14 +48,14 @@ impl TryFrom<String> for ScanTarget {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.parse::<IpAddr>() {
-            Ok(ip) => Ok(ScanTarget::Ip(IpAddress {
-                ip,
+            Ok(ip) => Ok(ScanTarget {
+                target: ScanTargetType::Ip(ip),
                 open_ports: vec![],
-            })),
-            Err(_) => Ok(ScanTarget::Domain(Subdomain {
-                domain: value,
+            }),
+            Err(_) => Ok(ScanTarget {
+                target: ScanTargetType::Domain(value),
                 open_ports: vec![],
-            })),
+            }),
         }
     }
 }
