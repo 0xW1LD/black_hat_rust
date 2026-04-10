@@ -1,4 +1,6 @@
+use core::fmt;
 use serde::Deserialize;
+use std::fmt::Display;
 use std::net::IpAddr;
 
 #[derive(Debug, Clone)]
@@ -27,6 +29,24 @@ pub struct Port {
 #[derive(Debug, Deserialize, Clone)]
 pub struct CrtShEntry {
     pub name_value: String,
+}
+
+impl ScanTarget {
+    pub fn ports(&self) -> Vec<Port> {
+        match &self {
+            ScanTarget::Domain(domain) => domain.open_ports.clone(),
+            ScanTarget::Ip(ip) => ip.open_ports.clone(),
+        }
+    }
+}
+
+impl Display for ScanTarget {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            ScanTarget::Domain(domain) => write!(f, "{}", domain.domain),
+            ScanTarget::Ip(ip) => write!(f, "{}", ip.ip),
+        }
+    }
 }
 
 impl TryFrom<String> for ScanTarget {

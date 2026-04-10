@@ -61,19 +61,9 @@ async fn main() -> Result<()> {
     println!("[+] Scan finished in: {:?}", scan_duration);
 
     for target in scan_result {
-        match target {
-            ScanTarget::Domain(domain) => {
-                println!("[+] Target: {}", &domain.domain);
-                for port in &domain.open_ports {
-                    println!("      {}", port.port)
-                }
-            }
-            ScanTarget::Ip(ip) => {
-                println!("[+] Target: {}", &ip.ip);
-                for port in &ip.open_ports {
-                    println!("      {}", port.port)
-                }
-            }
+        println!("[+] Target: {}", target);
+        for port in target.ports() {
+            println!("      {}", port.port)
         }
     }
     println!("Scan Completed.");
