@@ -2,7 +2,6 @@ use anyhow::Result;
 use clap::Parser;
 use futures::{StreamExt, stream};
 use reqwest::Client;
-use std::net::IpAddr;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -47,8 +46,8 @@ async fn main() -> Result<()> {
 
     let targets: Vec<ScanTarget> = match (target.target, wordlist) {
         (Domain(_domain), Some(_wl)) => {
-            print!("[-] Vhost functionality not yet implemented");
-            vec![ScanTarget::new()]
+            print!("[-] Vhost functionality not yet implemented... Exiting");
+            return Ok(());
         }
         (Domain(domain), None) => {
             println!("[*] Domain found, enumerating subdomains...");
@@ -59,10 +58,7 @@ async fn main() -> Result<()> {
         }
         (Ip(ip), _) => {
             println!("[*] Ip found, skipping subdomain enumeration...");
-            vec![ScanTarget {
-                target: Ip(ip),
-                open_ports: vec![],
-            }]
+            vec![ScanTarget::new(Ip(ip))]
         }
     };
 
