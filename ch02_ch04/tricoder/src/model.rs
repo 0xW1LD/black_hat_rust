@@ -20,6 +20,12 @@ pub struct Port {
     pub is_open: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct Vhost {
+    pub vhost: String,
+    pub is_valid: bool,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct CrtShEntry {
     pub name_value: String,

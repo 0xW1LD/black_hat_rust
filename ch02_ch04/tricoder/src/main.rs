@@ -19,9 +19,11 @@ mod vhosts;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Domain/IP to target for scan
     #[arg(short, long)]
     target: String,
 
+    /// If set swaps from DNS to Vhost Subdomain scan
     #[arg(short, long)]
     wordlist: Option<PathBuf>,
 }
@@ -39,14 +41,15 @@ async fn main() -> Result<()> {
         .build()?;
 
     let port_concurrency = 100;
+    let vhost_concurrency = 50;
     let scan_concurrency = 10;
 
     let scan_start = Instant::now();
     let scan_result: Vec<ScanTarget>;
 
     let targets: Vec<ScanTarget> = match (target.target, wordlist) {
-        (Domain(_domain), Some(_wl)) => {
-            print!("[-] Vhost functionality not yet implemented... Exiting");
+        (Domain(domain), Some(wl)) => {
+            vhosts::enumerate(&http_client, domain, wl, vhost_concurrency).await?;
             return Ok(());
         }
         (Domain(domain), None) => {
@@ -60,7 +63,7 @@ async fn main() -> Result<()> {
             println!("[*] Ip found, skipping subdomain enumeration...");
             match wl {
                 Some(_) => println!("[*] Wordlist was found but not needed, ignoring..."),
-                None => {},
+                None => {}
             }
             vec![ScanTarget::new(Ip(ip))]
         }

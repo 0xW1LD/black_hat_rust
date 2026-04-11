@@ -1,11 +1,77 @@
 use crate::{
     error::Error,
-    model::{
-        ScanTarget,
-        ScanTargetType::{Domain, Ip},
-    },
+    model::{ScanTarget, ScanTargetType, Vhost},
 };
+use futures::{StreamExt, stream};
+use http::StatusCode;
+use reqwest::{Client, header::HOST};
+use std::path::PathBuf;
 
-pub async fn enumerate() -> Result<Vec<ScanTarget>, Error> {
-    Ok(vec![ScanTarget::new(Domain("".to_string()))])
+pub async fn enumerate(
+    http_client: &Client,
+    target: String,
+    wl: PathBuf,
+    concurrency: usize,
+) -> Result<Vec<ScanTarget>, Error> {
+    let list = std::fs::read_to_string(wl)?
+        .lines()
+        .map(|l| l.to_string())
+        .collect::<Vec<String>>();
+    println!("[*] Loading {} entries from wordlist...", list.len());
+    let url = match http_client.get(format!("https://{}", target)).send().await {
+        Ok(_) => format!("https://{}", target),
+        Err(_) => format!("http://{}", target),
+    };
+    let base = http_client
+        .get(&url)
+        .header(HOST, format!("w1ld_fake_domain.{}", target))
+        .send()
+        .await?;
+
+    let base_status = base.status();
+    let base_len = base.content_length().unwrap_or(0);
+
+    println!("[*] Fuzzing Subdomains...");
+    let vhosts: Vec<Vhost> = stream::iter(list)
+        .map(|line| scan_vhost(line, http_client, &target, base_status, base_len, &url))
+        .buffer_unordered(concurrency)
+        .filter(|v| futures::future::ready(v.is_valid))
+        .collect()
+        .await;
+
+    println!("[+] Found: {} vhosts", vhosts.len());
+    vhosts.iter().for_each(|s| println!("        {}", s.vhost));
+
+    let targets: Vec<ScanTarget> = vhosts
+        .iter()
+        .map(|v| ScanTarget {
+            target: ScanTargetType::Domain(v.vhost.clone()),
+            open_ports: vec![],
+        })
+        .collect();
+    Ok(targets)
+}
+
+async fn scan_vhost(
+    vhost: String,
+    http_client: &Client,
+    target: &String,
+    base_status: StatusCode,
+    base_len: u64,
+    url: &String,
+) -> Vhost {
+    let resp = http_client
+        .get(url)
+        .header(HOST, format!("{}.{}", vhost, target))
+        .send()
+        .await
+        .unwrap();
+    let vhost_status = resp.status();
+    let vhost_len = resp.content_length().unwrap_or(0);
+
+    let is_valid = { base_status != vhost_status || base_len != vhost_len };
+    Vhost {
+        vhost: vhost,
+        is_valid,
+    }
 }
