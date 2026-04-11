@@ -30,7 +30,7 @@ pub async fn enumerate(
 
     let base_status = base.status();
 
-    println!("[*] Fuzzing Subdomains for:{}...", &url);
+    println!("[*] Fuzzing Subdomains for: {}...", &url);
     let vhosts: Vec<Vhost> = stream::iter(list)
         .map(|line| {
             scan_vhost(
@@ -72,7 +72,6 @@ async fn scan_vhost(
         .await
         .unwrap();
     let vhost_status = resp.status();
-    let vhost_len = resp.content_length().unwrap_or(0);
 
     let is_valid = { base_status != vhost_status };
     if is_valid {
