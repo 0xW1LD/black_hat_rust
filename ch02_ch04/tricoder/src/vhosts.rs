@@ -29,8 +29,9 @@ pub async fn enumerate(
         .await?;
 
     let base_status = base.status();
+    let base_len = base.content_length().unwrap_or(0);
 
-    println!("[*] Fuzzing Subdomains for: {}...", &url);
+    println!("[*] Fuzzing Subdomains for:{}...", &url);
     let vhosts: Vec<Vhost> = stream::iter(list)
         .map(|line| {
             scan_vhost(
@@ -38,6 +39,7 @@ pub async fn enumerate(
                 http_client,
                 &target,
                 base_status,
+                base_len,
                 &url,
             )
         })
@@ -63,6 +65,7 @@ async fn scan_vhost(
     http_client: &Client,
     target: &String,
     base_status: StatusCode,
+    base_len: u64,
     url: &String,
 ) -> Vhost {
     let resp = http_client
@@ -72,8 +75,9 @@ async fn scan_vhost(
         .await
         .unwrap();
     let vhost_status = resp.status();
+    let vhost_len = resp.content_length().unwrap_or(0);
 
-    let is_valid = { base_status != vhost_status };
+    let is_valid = { base_status != vhost_status || (base_len as i64 - vhost_len as i64).abs() > 100 };
     if is_valid {
         println!(
             "       {:<25}[Status Code: {}, Content Length: {}]",
