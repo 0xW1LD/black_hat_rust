@@ -77,7 +77,7 @@ async fn scan_vhost(
     let vhost_status = resp.status();
     let vhost_len = resp.content_length().unwrap_or(0);
 
-    let is_valid = { base_status != vhost_status || base_len != vhost_len };
+    let is_valid = { base_status != vhost_status };
     if is_valid {
         println!(
             "       {:<25}[Status Code: {}, Content Length: {}]",
