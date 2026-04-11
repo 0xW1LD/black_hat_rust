@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use futures::{StreamExt, stream};
-use reqwest::Client;
+use reqwest::{redirect,Client};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -38,6 +38,7 @@ async fn main() -> Result<()> {
         .timeout(Duration::from_secs(60))
         //.proxy(reqwest::Proxy::all("http://127.0.0.1:8080")?)
         //.danger_accept_invalid_certs(true)
+        .redirect(redirect::Policy::none())
         .build()?;
 
     let port_concurrency = 100;
