@@ -17,6 +17,7 @@ pub async fn enumerate(
         .lines()
         .map(|l| l.to_string())
         .collect::<Vec<String>>();
+    let max_len = list.iter().map(|l| l.len()).max().unwrap_or(15);
     println!("[*] Loading {} entries from wordlist...", list.len());
     let url = match http_client.get(format!("https://{}", target)).send().await {
         Ok(_) => format!("https://{}", target),
@@ -31,16 +32,25 @@ pub async fn enumerate(
     let base_status = base.status();
     let base_len = base.content_length().unwrap_or(0);
 
-    println!("[*] Fuzzing Subdomains...");
+    println!("[*] Fuzzing Subdomains for:{}...", &url);
     let vhosts: Vec<Vhost> = stream::iter(list)
-        .map(|line| scan_vhost(line, http_client, &target, base_status, base_len, &url))
+        .map(|line| {
+            scan_vhost(
+                line,
+                http_client,
+                &target,
+                base_status,
+                base_len,
+                &url,
+                max_len,
+            )
+        })
         .buffer_unordered(concurrency)
         .filter(|v| futures::future::ready(v.is_valid))
         .collect()
         .await;
 
     println!("[+] Found: {} vhosts", vhosts.len());
-    vhosts.iter().for_each(|s| println!("        {}", s.vhost));
 
     let targets: Vec<ScanTarget> = vhosts
         .iter()
@@ -59,6 +69,7 @@ async fn scan_vhost(
     base_status: StatusCode,
     base_len: u64,
     url: &String,
+    width: usize,
 ) -> Vhost {
     let resp = http_client
         .get(url)
@@ -70,6 +81,13 @@ async fn scan_vhost(
     let vhost_len = resp.content_length().unwrap_or(0);
 
     let is_valid = { base_status != vhost_status || base_len != vhost_len };
+    if is_valid {
+        println!(
+            "       {:<width$}[Status Code: {}, Content Length: {}]",
+            vhost, vhost_status, vhost_len
+        )
+    };
+
     Vhost {
         vhost: vhost,
         is_valid,

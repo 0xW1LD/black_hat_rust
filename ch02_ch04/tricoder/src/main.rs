@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use futures::{StreamExt, stream};
-use reqwest::{redirect,Client};
+use reqwest::{Client, redirect};
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
@@ -52,6 +52,8 @@ async fn main() -> Result<()> {
     let targets: Vec<ScanTarget> = match (target.target, wordlist) {
         (Domain(domain), Some(wl)) => {
             vhosts::enumerate(&http_client, domain, wl, vhost_concurrency).await?;
+            let scan_duration = scan_start.elapsed();
+            println!("[+] Scan finished in: {:?}", scan_duration);
             return Ok(());
         }
         (Domain(domain), None) => {
