@@ -6,6 +6,8 @@ use futures::{StreamExt, stream};
 use http::StatusCode;
 use reqwest::{Client, header::HOST};
 use std::path::PathBuf;
+use std::io::{BufRead,BufReader};
+use std::fs::File;
 
 pub async fn enumerate(
     http_client: &Client,
@@ -13,12 +15,9 @@ pub async fn enumerate(
     wl: PathBuf,
     concurrency: usize,
 ) -> Result<Vec<ScanTarget>, Error> {
-    let list = std::fs::read_to_string(wl)?
-        .lines()
-        .map(|l| l.to_string())
-        .collect::<Vec<String>>();
-    let max_len = list.iter().map(|l| l.len()).max().unwrap_or(15);
-    println!("[*] Loading {} entries from wordlist...", list.len());
+    let file = File::open(wl)?;
+    let list = BufReader::new(file).lines().filter_map(|l|l.ok());
+    println!("[*] Loading entries from wordlist...");
     let url = match http_client.get(format!("https://{}", target)).send().await {
         Ok(_) => format!("https://{}", target),
         Err(_) => format!("http://{}", target),
@@ -42,7 +41,6 @@ pub async fn enumerate(
                 base_status,
                 base_len,
                 &url,
-                max_len,
             )
         })
         .buffer_unordered(concurrency)
@@ -69,7 +67,6 @@ async fn scan_vhost(
     base_status: StatusCode,
     base_len: u64,
     url: &String,
-    width: usize,
 ) -> Vhost {
     let resp = http_client
         .get(url)
@@ -83,7 +80,7 @@ async fn scan_vhost(
     let is_valid = { base_status != vhost_status || base_len != vhost_len };
     if is_valid {
         println!(
-            "       {:<width$}[Status Code: {}, Content Length: {}]",
+            "       {:<25}[Status Code: {}, Content Length: {}]",
             vhost, vhost_status, vhost_len
         )
     };
