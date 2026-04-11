@@ -39,6 +39,7 @@ async fn main() -> Result<()> {
         //.proxy(reqwest::Proxy::all("http://127.0.0.1:8080")?)
         //.danger_accept_invalid_certs(true)
         .redirect(redirect::Policy::none())
+        .http1_only()
         .build()?;
 
     let port_concurrency = 100;
