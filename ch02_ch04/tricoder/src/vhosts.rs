@@ -5,9 +5,9 @@ use crate::{
 use futures::{StreamExt, stream};
 use http::StatusCode;
 use reqwest::{Client, header::HOST};
-use std::path::PathBuf;
-use std::io::{BufRead,BufReader};
 use std::fs::File;
+use std::io::{BufRead, BufReader};
+use std::path::PathBuf;
 
 pub async fn enumerate(
     http_client: &Client,
@@ -16,7 +16,7 @@ pub async fn enumerate(
     concurrency: usize,
 ) -> Result<Vec<ScanTarget>, Error> {
     let file = File::open(wl)?;
-    let list = BufReader::new(file).lines().filter_map(|l|l.ok());
+    let list = BufReader::new(file).lines().filter_map(|l| l.ok());
     println!("[*] Loading entries from wordlist...");
     let url = match http_client.get(format!("https://{}", target)).send().await {
         Ok(_) => format!("https://{}", target),
@@ -33,19 +33,15 @@ pub async fn enumerate(
 
     println!("[*] Fuzzing Subdomains for:{}...", &url);
     let vhosts: Vec<Vhost> = stream::iter(list)
-        .map(|line| {
-            scan_vhost(
-                line,
-                http_client,
-                &target,
-                base_status,
-                base_len,
-                &url,
-            )
-        })
+        .map(|line| scan_vhost(line, http_client, &target, base_status, base_len, &url))
         .buffer_unordered(concurrency)
-        .filter(|v| futures::future::ready(v.is_valid))
-        .collect()
+        .filter_map(|v| {
+            futures::future::ready(match v {
+                Ok(v) if v.is_valid => Some(v),
+                _ => None,
+            })
+        })
+        .collect::<Vec<Vhost>>()
         .await;
 
     println!("[+] Found: {} vhosts", vhosts.len());
@@ -67,26 +63,28 @@ async fn scan_vhost(
     base_status: StatusCode,
     base_len: u64,
     url: &String,
-) -> Vhost {
+) -> Result<Vhost, Error> {
     let resp = http_client
         .get(url)
         .header(HOST, format!("{}.{}", vhost, target))
         .send()
-        .await
-        .unwrap();
+        .await?;
     let vhost_status = resp.status();
     let vhost_len = resp.content_length().unwrap_or(0);
 
-    let is_valid = { base_status != vhost_status || (base_len as i64 - vhost_len as i64).abs() > vhost.len() as i64 };
+    let is_valid = {
+        base_status != vhost_status
+            || (base_len as i64 - vhost_len as i64).abs() > vhost.len() as i64
+    };
     if is_valid {
         println!(
-            "       {:<25}[Status Code: {}, Content Length: {}]",
+            "{:<25}[Status Code: {}, Content Length: {}]",
             vhost, vhost_status, vhost_len
         )
     };
 
-    Vhost {
+    Ok(Vhost {
         vhost: vhost,
         is_valid,
-    }
+    })
 }
