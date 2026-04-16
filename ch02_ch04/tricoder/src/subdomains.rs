@@ -3,7 +3,7 @@ use crate::{
     model::{CrtShEntry, ScanTarget, ScanTargetType},
 };
 use futures::{StreamExt, stream};
-use reqwest::Client;
+use reqwest::{Client};
 use std::{collections::HashSet, time::Duration};
 use trust_dns_resolver::{
     AsyncResolver,
@@ -13,7 +13,7 @@ use trust_dns_resolver::{
 
 type DnsResolver = AsyncResolver<TokioConnectionProvider>;
 
-pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<ScanTarget>, Error> {
+pub async fn enumerate(http_client: &Client, target: &str, concurrency: usize) -> Result<Vec<ScanTarget>, Error> {
     println!("[*] Gathering Entries...");
     let entries: Vec<CrtShEntry> = http_client
         .get(&format!("https://crt.sh/json?q={}", target))
@@ -27,7 +27,6 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<ScanTar
 
     let dns_resolver = AsyncResolver::tokio(ResolverConfig::default(), dns_resolver_opts);
 
-    //clean & deduplicate subdomains
     let mut subdomains: HashSet<String> = entries
         .into_iter()
         .map(|entry| {
@@ -46,27 +45,31 @@ pub async fn enumerate(http_client: &Client, target: &str) -> Result<Vec<ScanTar
     println!("[+] Found {} Subdomains!", subdomains.len());
 
     let subdomains: Vec<ScanTarget> = stream::iter(subdomains.into_iter())
-        .map(|domain| ScanTarget {
-            target: ScanTargetType::Domain(domain),
-            open_ports: Vec::new(),
-        })
-        .filter_map(|subdomain| {
+        .map(|domain| {
             let dns_resolver = dns_resolver.clone();
             async move {
-                if resolves(&dns_resolver, subdomain.to_string()).await {
-                    Some(subdomain)
-                } else {
-                    None
-                }
+            if resolves(&dns_resolver,&domain).await {
+                Some(ScanTarget {
+                    target: ScanTargetType::Domain(domain),
+                    open_ports: Vec::new(),
+                })
+            } else {
+                None
+            }
             }
         })
-        .collect()
+        .buffer_unordered(concurrency)
+        .filter_map(|s| futures::future::ready(match s {
+            Some(target) => Some(target),
+            None => None,
+        }))
+        .collect::<Vec<ScanTarget>>()
         .await;
     println!("[+] Resolved {} Subdomains!", subdomains.len());
 
     Ok(subdomains)
 }
 
-pub async fn resolves(dns_resolver: &DnsResolver, domain: String) -> bool {
-    dns_resolver.lookup_ip(&domain).await.is_ok()
+pub async fn resolves(dns_resolver: &DnsResolver, domain: &String) -> bool {
+    dns_resolver.lookup_ip(domain).await.is_ok()
 }

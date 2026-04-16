@@ -44,6 +44,7 @@ async fn main() -> Result<()> {
 
     let port_concurrency = 100;
     let vhost_concurrency = 50;
+    let domain_concurrency = 50;
     let scan_concurrency = 10;
 
     let scan_start = Instant::now();
@@ -51,14 +52,14 @@ async fn main() -> Result<()> {
 
     let targets: Vec<ScanTarget> = match (target.target, wordlist) {
         (Domain(domain), Some(wl)) => {
-            vhosts::enumerate(&http_client, domain, wl, vhost_concurrency).await?;
+            vhosts::enumerate(&http_client, domain, wl, domain_concurrency).await?;
             let scan_duration = scan_start.elapsed();
             println!("[+] Scan finished in: {:?}", scan_duration);
             return Ok(());
         }
         (Domain(domain), None) => {
             println!("[*] Domain found, enumerating subdomains...");
-            subdomains::enumerate(&http_client, &domain)
+            subdomains::enumerate(&http_client, &domain,vhost_concurrency)
                 .await?
                 .into_iter()
                 .collect()
