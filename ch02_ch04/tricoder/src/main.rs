@@ -85,9 +85,9 @@ async fn main() -> Result<()> {
 
     for target in scan_result {
         println!("[+] Target: {}", target);
-        println!("{:<10} STATE","PORT");
+        println!("{:<5} STATE","PORT");
         for port in target.ports() {
-            println!("{:<10} {}",port.port,"OPEN")
+            println!("{:<5} {}",port.port,"OPEN")
         }
     }
     println!("Scan Completed.");
