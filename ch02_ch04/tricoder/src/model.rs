@@ -27,8 +27,8 @@ pub struct Vhost {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct CrtShEntry {
-    pub name_value: String,
+pub struct CrtEntry {
+    pub dns_names: Vec<String>,
 }
 
 impl ScanTarget {

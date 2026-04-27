@@ -1,6 +1,6 @@
 use crate::{
     error::Error,
-    model::{CrtShEntry, ScanTarget, ScanTargetType},
+    model::{CrtEntry, ScanTarget, ScanTargetType},
 };
 use futures::{StreamExt, stream};
 use reqwest::{Client};
@@ -14,9 +14,13 @@ use trust_dns_resolver::{
 type DnsResolver = AsyncResolver<TokioConnectionProvider>;
 
 pub async fn enumerate(http_client: &Client, target: &str, concurrency: usize) -> Result<Vec<ScanTarget>, Error> {
+    dotenvy::dotenv()?;
+    let token = std::env::var("API_TOKEN")?;
+
     println!("[*] Gathering Entries...");
-    let entries: Vec<CrtShEntry> = http_client
-        .get(&format!("https://crt.sh/json?q={}", target))
+    let entries: Vec<CrtEntry> = http_client
+        .get(&format!("https://api.certspotter.com/v1/issuances?domain={}&include_subdomains=true&expand=dns_names", target))
+        .bearer_auth(token)
         .send()
         .await?
         .json()
@@ -29,13 +33,7 @@ pub async fn enumerate(http_client: &Client, target: &str, concurrency: usize) -
 
     let mut subdomains: HashSet<String> = entries
         .into_iter()
-        .map(|entry| {
-            entry
-                .name_value
-                .split('\n')
-                .map(|s| s.trim().to_string())
-                .collect::<Vec<String>>()
-        })
+        .map(|entry| entry.dns_names)
         .flatten()
         .filter(|subdomain: &String| subdomain != target)
         .filter(|subdomain: &String| !subdomain.contains("*"))
